@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Checkout — ShopHaus</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="navbar-mount"></div>
+<div id="cart-mount"></div>
+<div id="modal-mount"></div>
+<div id="toast-mount"></div>
+
+<div class="page-header">
+  <h1>Checkout</h1>
+  <div class="breadcrumb">
+    <a href="index.html">Shop</a> › <span>Checkout</span>
+  </div>
+</div>
+
+<div id="checkout-content">
+  <div class="loading" style="min-height:50vh"><div class="spinner"></div></div>
+</div>
+
+<footer class="footer">
+  <strong>ShopHaus</strong> &mdash; Curated goods for modern living. &copy; 2025
+</footer>
+
+<script src="js/layout.js"></script>
+<script src="js/app.js"></script>
+<script>
+  injectLayout('');
+
+  document.addEventListener('DOMContentLoaded', () => {
+    if (!user) { navigate('index.html'); return; }
+    if (!cart.length) { navigate('index.html'); return; }
+    renderCheckout();
+  });
+
+  function renderCheckout() {
+    const subtotal = cartTotal();
+    const shipping = subtotal >= 100 ? 0 : 9.99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
+
+    document.getElementById('checkout-content').innerHTML = `
+      <div class="checkout-page">
+        <!-- LEFT: Form -->
+        <div style="display:flex;flex-direction:column;gap:1.5rem">
+
+          <!-- Contact Info -->
+          <div class="checkout-card">
+            <h3>Contact Information</h3>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>First Name</label>
+                <input type="text" id="first-name" value="${user.name.split(' ')[0]}" required>
+              </div>
+              <div class="form-group">
+                <label>Last Name</label>
+                <input type="text" id="last-name" value="${user.name.split(' ').slice(1).join(' ')}" required>
+              </div>
+            </div>
+            <div class="form-group">
+              <label>Email</label>
+              <input type="email" id="email" value="${user.email}" readonly style="opacity:0.7">
+            </div>
+            <div class="form-group">
+              <label>Phone</label>
+              <input type="tel" id="phone" placeholder="+1 (555) 000-0000">
+            </div>
+          </div>
+
+          <!-- Shipping Address -->
+          <div class="checkout-card">
+            <h3>Shipping Address</h3>
+            <div class="form-group">
+              <label>Street Address</label>
+              <input type="text" id="street" placeholder="123 Main Street" required>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>City</label>
+                <input type="text" id="city" placeholder="New York" required>
+              </div>
+              <div class="form-group">
+                <label>State / Province</label>
+                <input type="text" id="state" placeholder="NY" required>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>ZIP / Postal Code</label>
+                <input type="text" id="zip" placeholder="10001" required>
+              </div>
+              <div class="form-group">
+                <label>Country</label>
+                <input type="text" id="country" value="United States">
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment -->
+          <div class="checkout-card">
+            <h3>Payment Details</h3>
+            <div style="background:var(--cream);border:1.5px dashed var(--border);border-radius:var(--radius);padding:1rem;text-align:center;color:var(--mid);font-size:14px;margin-bottom:1rem">
+              🔒 Demo mode — no real payment processed
+            </div>
+            <div class="form-group">
+              <label>Card Number</label>
+              <input type="text" placeholder="4242 4242 4242 4242" maxlength="19" oninput="formatCard(this)">
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div class="form-group">
+                <label>Expiry</label>
+                <input type="text" placeholder="MM / YY" maxlength="7" oninput="formatExpiry(this)">
+              </div>
+              <div class="form-group">
+                <label>CVV</label>
+                <input type="text" placeholder="123" maxlength="4">
+              </div>
+            </div>
+          </div>
+
+          <div id="place-order-error" class="form-error" style="font-size:14px"></div>
+          <button class="btn btn-accent btn-lg btn-full" id="place-order-btn" onclick="placeOrder()">
+            Place Order — $${total.toFixed(2)}
+          </button>
+        </div>
+
+        <!-- RIGHT: Order Summary -->
+        <div class="checkout-card" style="position:sticky;top:80px">
+          <h3>Order Summary</h3>
+          ${cart.map(item => `
+            <div class="order-summary-item">
+              <img class="order-summary-img" src="${item.image}" alt="${item.name}" onerror="this.src='https://via.placeholder.com/54'">
+              <div class="order-summary-info">
+                <div class="name">${item.name}</div>
+                <div class="qty">Qty: ${item.quantity}</div>
+              </div>
+              <div class="order-summary-price">$${(item.price * item.quantity).toFixed(2)}</div>
+            </div>
+          `).join('')}
+
+          <div class="summary-totals">
+            <div class="summary-row"><span>Subtotal</span><span>$${subtotal.toFixed(2)}</span></div>
+            <div class="summary-row"><span>Shipping</span><span>${shipping === 0 ? 'Free' : '$' + shipping.toFixed(2)}</span></div>
+            <div class="summary-row"><span>Tax (8%)</span><span>$${tax.toFixed(2)}</span></div>
+            <div class="summary-row total"><span>Total</span><span>$${total.toFixed(2)}</span></div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function formatCard(input) {
+    let v = input.value.replace(/\D/g,'').substring(0,16);
+    input.value = v.replace(/(.{4})/g,'$1 ').trim();
+  }
+
+  function formatExpiry(input) {
+    let v = input.value.replace(/\D/g,'').substring(0,4);
+    if (v.length >= 2) v = v.substring(0,2) + ' / ' + v.substring(2);
+    input.value = v;
+  }
+
+  async function placeOrder() {
+    const btn = document.getElementById('place-order-btn');
+    const errEl = document.getElementById('place-order-error');
+
+    const street = document.getElementById('street').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const state = document.getElementById('state').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+    const country = document.getElementById('country').value.trim();
+
+    if (!street || !city || !state || !zip) {
+      errEl.textContent = 'Please fill in your complete shipping address.';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'Placing Order…';
+    errEl.textContent = '';
+
+    const items = cart.map(i => ({ productId: i.id, quantity: i.quantity }));
+    const shipping_address = { street, city, state, zip, country };
+
+    try {
+      const order = await apiFetch('/orders', {
+        method: 'POST',
+        body: JSON.stringify({ items, shipping_address })
+      });
+
+      // Clear cart
+      cart = [];
+      saveCart();
+
+      navigate('success.html', { orderId: order.id });
+    } catch (err) {
+      errEl.textContent = err.message;
+      btn.disabled = false;
+      btn.innerHTML = `Place Order — $${(cartTotal() * 1.08 + (cartTotal() >= 100 ? 0 : 9.99)).toFixed(2)}`;
+    }
+  }
+</script>
+</body>
+</html>

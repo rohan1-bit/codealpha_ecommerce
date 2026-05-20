@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product — ShopHaus</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="navbar-mount"></div>
+<div id="cart-mount"></div>
+<div id="modal-mount"></div>
+<div id="toast-mount"></div>
+
+<div id="page-content">
+  <div class="loading" style="min-height:60vh"><div class="spinner"></div></div>
+</div>
+
+<footer class="footer">
+  <strong>ShopHaus</strong> &mdash; Curated goods for modern living. &copy; 2025
+</footer>
+
+<script src="js/layout.js"></script>
+<script src="js/app.js"></script>
+<script>
+  injectLayout('');
+
+  let product = null;
+  let qty = 1;
+
+  async function loadProduct() {
+    const id = getParam('id');
+    if (!id) { navigate('index.html'); return; }
+
+    try {
+      product = await apiFetch(`/products/${id}`);
+      document.title = `${product.name} — ShopHaus`;
+      render();
+    } catch {
+      document.getElementById('page-content').innerHTML = `
+        <div class="empty-state" style="min-height:60vh;display:flex;align-items:center;justify-content:center;flex-direction:column">
+          <h3>Product not found</h3>
+          <a href="index.html" class="btn btn-primary" style="margin-top:1rem">Back to Shop</a>
+        </div>`;
+    }
+  }
+
+  function render() {
+    document.getElementById('page-content').innerHTML = `
+      <div style="background:var(--white);border-bottom:1px solid var(--border);padding:1rem 2rem;">
+        <div style="max-width:1100px;margin:0 auto;">
+          <nav class="breadcrumb">
+            <a href="index.html">Shop</a>
+            <span>›</span>
+            <a href="index.html?category=${encodeURIComponent(product.category)}">${product.category}</a>
+            <span>›</span>
+            <span>${product.name}</span>
+          </nav>
+        </div>
+      </div>
+
+      <div class="product-detail">
+        <div>
+          <div class="detail-img-wrap">
+            <img class="detail-img" src="${product.image}" alt="${product.name}" onerror="this.src='https://via.placeholder.com/600x480'">
+          </div>
+        </div>
+
+        <div class="detail-info">
+          <div class="detail-category">${product.category}</div>
+          <h1 class="detail-name">${product.name}</h1>
+          <div class="detail-price">$${parseFloat(product.price).toFixed(2)}</div>
+          <p class="detail-desc">${product.description}</p>
+
+          <div class="detail-stock">
+            <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24">
+              <polyline points="20 6 9 17 4 12"/>
+            </svg>
+            ${product.stock > 10 ? 'In Stock' : product.stock > 0 ? `Only ${product.stock} left` : 'Out of Stock'}
+          </div>
+
+          <div class="qty-row">
+            <div class="qty-control">
+              <button onclick="changeQty(-1)">−</button>
+              <span id="qty-display">${qty}</span>
+              <button onclick="changeQty(1)">+</button>
+            </div>
+            <span style="font-size:13px;color:var(--mid)">${product.stock} available</span>
+          </div>
+
+          <div style="display:flex;gap:1rem;flex-wrap:wrap">
+            <button class="btn btn-primary btn-lg" onclick="handleAddToCart()" ${product.stock === 0 ? 'disabled' : ''}>
+              <svg width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/>
+                <path d="M16 10a4 4 0 0 1-8 0"/>
+              </svg>
+              Add to Cart
+            </button>
+            <button class="btn btn-outline btn-lg" onclick="handleBuyNow()" ${product.stock === 0 ? 'disabled' : ''}>
+              Buy Now
+            </button>
+          </div>
+
+          <div style="margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)">
+            <div style="display:flex;flex-direction:column;gap:0.8rem">
+              <div style="display:flex;align-items:center;gap:0.8rem;font-size:13px;color:var(--mid)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <rect x="1" y="3" width="15" height="13" rx="1"/><path d="m16 8 5 3v5h-5V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/>
+                </svg>
+                Free shipping on orders over $100
+              </div>
+              <div style="display:flex;align-items:center;gap:0.8rem;font-size:13px;color:var(--mid)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/>
+                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+                </svg>
+                30-day hassle-free returns
+              </div>
+              <div style="display:flex;align-items:center;gap:0.8rem;font-size:13px;color:var(--mid)">
+                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                  <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                </svg>
+                Secure checkout & encrypted payment
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function changeQty(delta) {
+    qty = Math.max(1, Math.min(product.stock, qty + delta));
+    document.getElementById('qty-display').textContent = qty;
+  }
+
+  function handleAddToCart() {
+    addToCart(product, qty);
+    openCart();
+  }
+
+  function handleBuyNow() {
+    addToCart(product, qty);
+    if (!user) {
+      openAuthModal('login');
+    } else {
+      navigate('checkout.html');
+    }
+  }
+
+  document.addEventListener('DOMContentLoaded', loadProduct);
+</script>
+</body>
+</html>
