@@ -1,6 +1,5 @@
 // ─── CONFIG ────────────────────────────────────────────────────────────────
-const API = 'http://localhost:3001/api';
-
+const API = 'https://shophaus-api.onrender.com/api';
 // ─── STATE ─────────────────────────────────────────────────────────────────
 let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 let user = JSON.parse(localStorage.getItem('user') || 'null');
