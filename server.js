@@ -8,7 +8,10 @@ const { getDb, query, run } = require('./database');
 const { authenticate, SECRET } = require('./middleware');
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: ['https://codealpha-ecommerce.vercel.app', 'http://localhost:3001'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Serve frontend files from the same directory as server.js
